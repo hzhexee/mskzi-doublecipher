@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                             QHBoxLayout, QPushButton, QLabel, QTextEdit, 
                             QMenuBar, QMenu, QMessageBox, QGridLayout, QScrollArea)
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont
 from playfair_func import text_prep, bigramm_plaintext
 
 class PlayfairDemo(QMainWindow):
@@ -10,12 +11,15 @@ class PlayfairDemo(QMainWindow):
         super().__init__()
         self.current_step = 0
         self.total_steps = 4
+        # Создаем более крупный шрифт для использования в приложении
+        self.button_font = QFont()
+        self.button_font.setPointSize(12)  # Увеличиваем размер шрифта
         self.initUI()
         
     def initUI(self):
         # Set window properties
         self.setWindowTitle('Шифр Плейфера - Демонстрация')
-        self.setGeometry(300, 300, 800, 600)
+        self.setGeometry(300, 300, 900, 700)  # Увеличиваем размер окна
         
         # Create central widget and layout
         central_widget = QWidget()
@@ -27,20 +31,40 @@ class PlayfairDemo(QMainWindow):
         # Create input field for key with label
         input_layout = QVBoxLayout()
         key_label = QLabel("Введите слово-ключ:")
+        key_label.setFont(self.button_font)  # Увеличиваем шрифт метки
         self.input_text = QTextEdit()
-        input_layout.addWidget(key_label)
-        input_layout.addWidget(self.input_text)
+        self.input_text.setFixedHeight(90)  # Увеличиваем высоту поля ввода
+        self.input_text.setFont(self.button_font)  # Увеличиваем шрифт текста
+        
+        # Create a layout for key input area
+        key_input_layout = QVBoxLayout()
+        key_input_layout.addWidget(key_label)
+        key_input_layout.addWidget(self.input_text)
         
         # Add encrypt button
         self.encrypt_btn = QPushButton("Создать таблицу")
+        self.encrypt_btn.setFont(self.button_font)  # Увеличиваем шрифт кнопки
+        self.encrypt_btn.setMinimumHeight(40)  # Увеличиваем высоту кнопки
         self.encrypt_btn.clicked.connect(self.encrypt_text)
-        input_layout.addWidget(self.encrypt_btn)
+        key_input_layout.addWidget(self.encrypt_btn)
+        
+        # Create a container for the key input layout
+        key_container = QWidget()
+        key_container.setLayout(key_input_layout)
+        self.key_container = key_container
+        
+        input_layout.addWidget(key_container)
         
         # Create second input field for text to encrypt (initially hidden)
         self.encrypt_layout = QVBoxLayout()
         encrypt_label = QLabel("Введите текст для шифрования:")
+        encrypt_label.setFont(self.button_font)  # Увеличиваем шрифт метки
         self.encrypt_input = QTextEdit()
+        self.encrypt_input.setFixedHeight(90)  # Увеличиваем высоту поля ввода
+        self.encrypt_input.setFont(self.button_font)  # Увеличиваем шрифт текста
         self.process_btn = QPushButton("Обработать текст")
+        self.process_btn.setFont(self.button_font)  # Увеличиваем шрифт кнопки
+        self.process_btn.setMinimumHeight(40)  # Увеличиваем высоту кнопки
         self.process_btn.clicked.connect(self.process_text)
         
         self.encrypt_layout.addWidget(encrypt_label)
@@ -54,6 +78,10 @@ class PlayfairDemo(QMainWindow):
         self.encrypt_container = encrypt_container
         
         input_layout.addWidget(encrypt_container)
+        
+        # Добавляем растягивающийся элемент, чтобы прижать все виджеты вверх
+        input_layout.addStretch(1)
+        
         main_layout.addLayout(input_layout)
         
         # Create demo display area - use a scrollable widget container instead of just a QTextEdit
@@ -74,13 +102,18 @@ class PlayfairDemo(QMainWindow):
         # Create step navigation buttons
         nav_layout = QHBoxLayout()
         self.prev_btn = QPushButton("Предыдущий шаг")
+        self.prev_btn.setFont(self.button_font)  # Увеличиваем шрифт кнопки
+        self.prev_btn.setMinimumHeight(50)  # Увеличиваем высоту кнопки
         self.prev_btn.clicked.connect(self.previous_step)
         self.prev_btn.setEnabled(False)
         
         self.next_btn = QPushButton("Следующий шаг")
+        self.next_btn.setFont(self.button_font)  # Увеличиваем шрифт кнопки
+        self.next_btn.setMinimumHeight(50)  # Увеличиваем высоту кнопки
         self.next_btn.clicked.connect(self.next_step)
         
         self.step_label = QLabel("Шаг 1 из 4")
+        self.step_label.setFont(self.button_font)  # Увеличиваем шрифт метки
         self.step_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
         nav_layout.addWidget(self.prev_btn)
@@ -181,8 +214,10 @@ class PlayfairDemo(QMainWindow):
         # Show/hide appropriate input fields based on step
         if self.current_step == 1:  # Step 2
             self.encrypt_container.setVisible(True)
+            self.key_container.setVisible(False)  # Hide key input on step 2
         else:
             self.encrypt_container.setVisible(False)
+            self.key_container.setVisible(True)  # Show key input on other steps
         
         # Get the input text
         text = self.input_text.toPlainText()
@@ -190,6 +225,8 @@ class PlayfairDemo(QMainWindow):
         # Create a text display for the content
         text_display = QTextEdit()
         text_display.setReadOnly(True)
+        text_display.setFont(self.button_font)  # Увеличиваем шрифт текста вывода
+        text_display.setMinimumHeight(300)  # Увеличиваем минимальную высоту области вывода
         
         # Show different content based on current step
         if self.current_step == 0:
@@ -245,13 +282,14 @@ class PlayfairDemo(QMainWindow):
         
         # Display the processed text info
         info_label = QLabel(f"Обработанный текст: {processed_text}")
+        info_label.setFont(self.button_font)  # Увеличиваем шрифт информационной метки
         info_label.setWordWrap(True)
         self.display_layout.addWidget(info_label)
         
         # Create a grid layout for the matrix
         matrix_widget = QWidget()
         grid_layout = QGridLayout(matrix_widget)
-        grid_layout.setSpacing(5)
+        grid_layout.setSpacing(10)  # Увеличиваем интервалы между ячейками
         
         # Fill the grid with characters
         char_index = 0
@@ -261,8 +299,8 @@ class PlayfairDemo(QMainWindow):
                     # Create a label for each character
                     char_label = QLabel(processed_text[char_index])
                     char_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-                    char_label.setStyleSheet("border: 1px solid black; padding: 5px; font-weight: bold; font-size: 14px;")
-                    char_label.setMinimumSize(30, 30)
+                    char_label.setStyleSheet("border: 2px solid black; padding: 8px; font-weight: bold; font-size: 18px;")
+                    char_label.setMinimumSize(40, 40)  # Увеличиваем размер ячеек
                     grid_layout.addWidget(char_label, row, col)
                     char_index += 1
         
