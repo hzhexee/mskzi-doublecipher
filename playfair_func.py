@@ -165,19 +165,19 @@ def playfair_encrypt(plaintext, key):
     # Объединяем зашифрованные биграммы
     return ' '.join(encrypted_bigrams)
 
-test_text = "ЕХАЛ ГРЕКА ЧЕРЕЗ РЕКУ"
-test_key = "ПЛЕЙФЕР"
+# test_text = "ЕХАЛ ГРЕКА ЧЕРЕЗ РЕКУ"
+# test_key = "ПЛЕЙФЕР"
 
-# Отладочный вывод для проверки
-print("Матрица Плейфера:")
-matrix = playfair_matrix(test_key)
-for row in matrix:
-    print(row)
+# # Отладочный вывод для проверки
+# print("Матрица Плейфера:")
+# matrix = playfair_matrix(test_key)
+# for row in matrix:
+#     print(row)
     
-print("\nБиграммы:")
-bigrams = bigramm_split(test_text)
-print(bigrams)
+# print("\nБиграммы:")
+# bigrams = bigramm_split(test_text)
+# print(bigrams)
 
-# Затем вызывайте функцию шифрования
-print("\nРезультат шифрования:")
-print(playfair_encrypt(test_text, test_key))
+# # Затем вызывайте функцию шифрования
+# print("\nРезультат шифрования:")
+# print(playfair_encrypt(test_text, test_key))
