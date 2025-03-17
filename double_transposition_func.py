@@ -1,10 +1,12 @@
 import random
+import re
 
 def text_prep(text):
     """
     Подготавливает текст для шифрования:
     - Заменяет 'Ё' на 'Е'
     - Делает все буквы заглавными
+    - Удаляет все специальные символы (оставляет только буквы)
 
     Args:
         text (str): Ключевое слово или фраза
@@ -12,8 +14,13 @@ def text_prep(text):
     Returns:
         str: Форматированная строка
     """
-    # Заменяем 'Ё' на 'Е' и делаем все буквы заглавными
-    return text.upper().replace('Ё', 'Е')
+    # Сначала сделаем текст заглавным и заменим 'Ё' на 'Е'
+    text = text.upper().replace('Ё', 'Е')
+    
+    # Удалим все символы, кроме букв (латинских и кириллических)
+    text = re.sub(r'[^A-ZА-Я]', '', text)
+    
+    return text
 
 
 def double_transposition_encrypt(plaintext, key1, key2):
@@ -117,8 +124,8 @@ def get_key_permutation(key):
 
 
 # Тест шифрования
-plaintext = 'ЕХАЛ ГРЕК ЧЕРЕ РЕКУ'
-key1 = 'КЛЮЧ'
-key2 = 'СТОЛ'
-ciphertext = double_transposition_encrypt(plaintext, key1, key2)
-print(ciphertext) 
+# plaintext = 'ЕХАЛ ГРЕК ЧЕРЕ РЕКУ'
+# key1 = 'КЛЮЧ'
+# key2 = 'СТОЛ'
+# ciphertext = double_transposition_encrypt(plaintext, key1, key2)
+# print(ciphertext) 
