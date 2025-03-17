@@ -1,10 +1,10 @@
 import sys
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                             QHBoxLayout, QPushButton, QLabel, QTextEdit, 
-                            QMenuBar, QMenu, QMessageBox, QGridLayout, QScrollArea)
+                            QMenuBar, QMenu, QMessageBox, QGridLayout, QScrollArea, QSizePolicy)
 from PyQt6.QtCore import Qt, QTimer  # Add QTimer here
 from PyQt6.QtGui import QFont
-from playfair_func import text_prep, bigramm_plaintext
+from playfair_func import text_prep
 
 class PlayfairDemo(QMainWindow):
     def __init__(self):
@@ -110,7 +110,9 @@ class PlayfairDemo(QMainWindow):
         self.display_widget = display_widget
         self.demo_display = scroll_area
         
-        main_layout.addWidget(scroll_area)
+        # Make the scroll area expand to fill available space
+        scroll_area.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        main_layout.addWidget(scroll_area, 1)  # Add stretch factor of 1
         
         # Create step navigation buttons
         nav_layout = QHBoxLayout()
@@ -277,7 +279,8 @@ class PlayfairDemo(QMainWindow):
                     "Каждая пара букв шифруется по правилам:\n"
                     "1. Если буквы в одной строке, берутся буквы справа от каждой\n"
                     "2. Если буквы в одном столбце, берутся буквы снизу от каждой\n"
-                    "3. Иначе, буквы на пересечении строк и столбцов исходных букв"
+                    "3. Иначе, буквы на пересечении строк и столбцов исходных букв\n"
+                    "В анимации синим отображаются исходные символы, а зеленым - зашифрованные."
                 )
                 explanation.setFont(self.button_font)
                 explanation.setWordWrap(True)
