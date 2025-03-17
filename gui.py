@@ -1,12 +1,13 @@
 import sys
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                             QHBoxLayout, QPushButton, QLabel, QTextEdit, 
-                            QMenuBar, QMenu, QMessageBox, QGridLayout, QScrollArea, QSizePolicy)
-from PyQt6.QtCore import Qt, QTimer  # Add QTimer here
+                            QMenuBar, QMenu, QMessageBox, QGridLayout, QScrollArea, 
+                            QSizePolicy, QTabWidget)  # Добавлен QTabWidget
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QFont
 from playfair_func import text_prep
 
-class PlayfairDemo(QMainWindow):
+class CipherDemo(QMainWindow):  # Переименовал класс для более общего названия
     def __init__(self):
         super().__init__()
         self.current_step = 0
@@ -31,7 +32,7 @@ class PlayfairDemo(QMainWindow):
         
     def initUI(self):
         # Set window properties
-        self.setWindowTitle('Шифр Плейфера - Демонстрация')
+        self.setWindowTitle('Демонстрация шифров')
         self.setGeometry(300, 300, 900, 700)  # Увеличиваем размер окна
         
         # Create central widget and layout
@@ -41,13 +42,23 @@ class PlayfairDemo(QMainWindow):
         # Create menu bar
         self.create_menu_bar()
         
+        # Создаем виджет вкладок
+        self.tab_widget = QTabWidget()
+        self.tab_widget.setFont(self.button_font)
+        
+        # Создаем вкладку для шифра Плейфера
+        playfair_tab = QWidget()
+        playfair_layout = QVBoxLayout(playfair_tab)
+        
+        # === ПЕРЕМЕЩАЕМ СУЩЕСТВУЮЩИЙ ИНТЕРФЕЙС ШИФРА ПЛЕЙФЕРА ВО ВКЛАДКУ ===
+        
         # Create input field for key with label
         input_layout = QVBoxLayout()
         key_label = QLabel("Введите слово-ключ:")
-        key_label.setFont(self.button_font)  # Увеличиваем шрифт метки
+        key_label.setFont(self.button_font)
         self.input_text = QTextEdit()
-        self.input_text.setFixedHeight(90)  # Увеличиваем высоту поля ввода
-        self.input_text.setFont(self.button_font)  # Увеличиваем шрифт текста
+        self.input_text.setFixedHeight(90)
+        self.input_text.setFont(self.button_font)
         
         # Create a layout for key input area
         key_input_layout = QVBoxLayout()
@@ -56,8 +67,8 @@ class PlayfairDemo(QMainWindow):
         
         # Add encrypt button
         self.encrypt_btn = QPushButton("Создать таблицу")
-        self.encrypt_btn.setFont(self.button_font)  # Увеличиваем шрифт кнопки
-        self.encrypt_btn.setMinimumHeight(40)  # Увеличиваем высоту кнопки
+        self.encrypt_btn.setFont(self.button_font)
+        self.encrypt_btn.setMinimumHeight(40)
         self.encrypt_btn.clicked.connect(self.encrypt_text)
         key_input_layout.addWidget(self.encrypt_btn)
         
@@ -71,13 +82,13 @@ class PlayfairDemo(QMainWindow):
         # Create second input field for text to encrypt (initially hidden)
         self.encrypt_layout = QVBoxLayout()
         encrypt_label = QLabel("Введите текст для шифрования:")
-        encrypt_label.setFont(self.button_font)  # Увеличиваем шрифт метки
+        encrypt_label.setFont(self.button_font)
         self.encrypt_input = QTextEdit()
-        self.encrypt_input.setFixedHeight(90)  # Увеличиваем высоту поля ввода
-        self.encrypt_input.setFont(self.button_font)  # Увеличиваем шрифт текста
+        self.encrypt_input.setFixedHeight(90)
+        self.encrypt_input.setFont(self.button_font)
         self.process_btn = QPushButton("Обработать текст")
-        self.process_btn.setFont(self.button_font)  # Увеличиваем шрифт кнопки
-        self.process_btn.setMinimumHeight(40)  # Увеличиваем высоту кнопки
+        self.process_btn.setFont(self.button_font)
+        self.process_btn.setMinimumHeight(40)
         self.process_btn.clicked.connect(self.process_text)
         
         self.encrypt_layout.addWidget(encrypt_label)
@@ -95,9 +106,9 @@ class PlayfairDemo(QMainWindow):
         # Добавляем растягивающийся элемент, чтобы прижать все виджеты вверх
         input_layout.addStretch(1)
         
-        main_layout.addLayout(input_layout)
+        playfair_layout.addLayout(input_layout)
         
-        # Create demo display area - use a scrollable widget container instead of just a QTextEdit
+        # Create demo display area - use a scrollable widget container
         display_widget = QWidget()
         self.display_layout = QVBoxLayout(display_widget)
         
@@ -112,30 +123,47 @@ class PlayfairDemo(QMainWindow):
         
         # Make the scroll area expand to fill available space
         scroll_area.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        main_layout.addWidget(scroll_area, 1)  # Add stretch factor of 1
+        playfair_layout.addWidget(scroll_area, 1)  # Add stretch factor of 1
         
         # Create step navigation buttons
         nav_layout = QHBoxLayout()
         self.prev_btn = QPushButton("Предыдущий шаг")
-        self.prev_btn.setFont(self.button_font)  # Увеличиваем шрифт кнопки
-        self.prev_btn.setMinimumHeight(50)  # Увеличиваем высоту кнопки
+        self.prev_btn.setFont(self.button_font)
+        self.prev_btn.setMinimumHeight(50)
         self.prev_btn.clicked.connect(self.previous_step)
         self.prev_btn.setEnabled(False)
         
         self.next_btn = QPushButton("Следующий шаг")
-        self.next_btn.setFont(self.button_font)  # Увеличиваем шрифт кнопки
-        self.next_btn.setMinimumHeight(50)  # Увеличиваем высоту кнопки
+        self.next_btn.setFont(self.button_font)
+        self.next_btn.setMinimumHeight(50)
         self.next_btn.clicked.connect(self.next_step)
         
         self.step_label = QLabel("Шаг 1 из 4")
-        self.step_label.setFont(self.button_font)  # Увеличиваем шрифт метки
+        self.step_label.setFont(self.button_font)
         self.step_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
         nav_layout.addWidget(self.prev_btn)
         nav_layout.addWidget(self.step_label)
         nav_layout.addWidget(self.next_btn)
         
-        main_layout.addLayout(nav_layout)
+        playfair_layout.addLayout(nav_layout)
+        
+        # === СОЗДАЕМ ВКЛАДКУ ДЛЯ ШИФРА ДВОЙНОЙ ПЕРЕСТАНОВКИ ===
+        double_transposition_tab = QWidget()
+        double_transposition_layout = QVBoxLayout(double_transposition_tab)
+        
+        # Заглушка для вкладки
+        placeholder = QLabel("Интерфейс для шифра двойной перестановки будет добавлен позже")
+        placeholder.setFont(self.button_font)
+        placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        double_transposition_layout.addWidget(placeholder)
+        
+        # Добавляем вкладки в виджет вкладок
+        self.tab_widget.addTab(playfair_tab, "Шифр Плейфера")
+        self.tab_widget.addTab(double_transposition_tab, "Шифр двойной перестановки")
+        
+        # Добавляем виджет вкладок в главный макет
+        main_layout.addWidget(self.tab_widget)
         
         # Set the central widget
         self.setCentralWidget(central_widget)
@@ -548,7 +576,7 @@ class PlayfairDemo(QMainWindow):
 
 def main():
     app = QApplication(sys.argv)
-    window = PlayfairDemo()
+    window = CipherDemo()
     window.show()
     sys.exit(app.exec())
 
