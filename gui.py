@@ -152,6 +152,105 @@ class CipherDemo(QMainWindow):  # Переименовал класс для б�
         double_transposition_tab = QWidget()
         double_transposition_layout = QVBoxLayout(double_transposition_tab)
         
+        # Создаем поля для ввода данных
+        dt_input_layout = QVBoxLayout()
+        
+        # Поле ввода для текста шифрования
+        dt_text_label = QLabel("Введите текст для шифрования:")
+        dt_text_label.setFont(self.button_font)
+        self.dt_text_input = QTextEdit()
+        self.dt_text_input.setFixedHeight(90)
+        self.dt_text_input.setFont(self.button_font)
+        
+        # Поле ввода для первого ключа
+        dt_key1_label = QLabel("Введите ключевое слово №1:")
+        dt_key1_label.setFont(self.button_font)
+        self.dt_key1_input = QTextEdit()
+        self.dt_key1_input.setFixedHeight(60)
+        self.dt_key1_input.setFont(self.button_font)
+        
+        # Поле ввода для второго ключа
+        dt_key2_label = QLabel("Введите ключевое слово №2:")
+        dt_key2_label.setFont(self.button_font)
+        self.dt_key2_input = QTextEdit()
+        self.dt_key2_input.setFixedHeight(60)
+        self.dt_key2_input.setFont(self.button_font)
+        
+        # Кнопка для запуска шифрования
+        self.dt_encrypt_btn = QPushButton("Начать шифрование")
+        self.dt_encrypt_btn.setFont(self.button_font)
+        self.dt_encrypt_btn.setMinimumHeight(40)
+        self.dt_encrypt_btn.clicked.connect(self.dt_start_encryption)
+        
+        # Добавляем все элементы в макет
+        dt_input_layout.addWidget(dt_text_label)
+        dt_input_layout.addWidget(self.dt_text_input)
+        dt_input_layout.addWidget(dt_key1_label)
+        dt_input_layout.addWidget(self.dt_key1_input)
+        dt_input_layout.addWidget(dt_key2_label)
+        dt_input_layout.addWidget(self.dt_key2_input)
+        dt_input_layout.addWidget(self.dt_encrypt_btn)
+        
+        # Добавляем растягивающийся элемент
+        dt_input_layout.addStretch(1)
+        
+        # Создаем область для вывода демонстрации шифрования
+        dt_display_widget = QWidget()
+        self.dt_display_layout = QVBoxLayout(dt_display_widget)
+        
+        # Создаем область прокрутки
+        dt_scroll_area = QScrollArea()
+        dt_scroll_area.setWidgetResizable(True)
+        dt_scroll_area.setWidget(dt_display_widget)
+        dt_scroll_area.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        
+        # Сохраняем ссылки
+        self.dt_display_widget = dt_display_widget
+        self.dt_demo_display = dt_scroll_area
+        
+        # Создаем кнопки навигации для шагов
+        dt_nav_layout = QHBoxLayout()
+        self.dt_prev_btn = QPushButton("Предыдущий шаг")
+        self.dt_prev_btn.setFont(self.button_font)
+        self.dt_prev_btn.setMinimumHeight(50)
+        self.dt_prev_btn.clicked.connect(self.dt_previous_step)
+        self.dt_prev_btn.setEnabled(False)
+        
+        self.dt_next_btn = QPushButton("Следующий шаг")
+        self.dt_next_btn.setFont(self.button_font)
+        self.dt_next_btn.setMinimumHeight(50)
+        self.dt_next_btn.clicked.connect(self.dt_next_step)
+        self.dt_next_btn.setEnabled(False)
+        
+        self.dt_step_label = QLabel("Шаг 0 из 4")
+        self.dt_step_label.setFont(self.button_font)
+        self.dt_step_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        dt_nav_layout.addWidget(self.dt_prev_btn)
+        dt_nav_layout.addWidget(self.dt_step_label)
+        dt_nav_layout.addWidget(self.dt_next_btn)
+        
+        # Добавляем элементы в основной макет вкладки
+        double_transposition_layout.addLayout(dt_input_layout)
+        double_transposition_layout.addWidget(dt_scroll_area, 1)
+        double_transposition_layout.addLayout(dt_nav_layout)
+        
+        # Инициализируем начальное состояние
+        self.dt_current_step = 0
+        self.dt_total_steps = 4
+        
+        # Добавляем информационный текст
+        dt_info = QTextEdit()
+        dt_info.setReadOnly(True)
+        dt_info.setFont(self.button_font)
+        dt_info.setPlainText(
+            "Шифр двойной перестановки\n\n"
+            "Для начала шифрования введите текст и два ключевых слова, "
+            "затем нажмите кнопку 'Начать шифрование'. "
+            "Демонстрация покажет пошаговый процесс шифрования."
+        )
+        self.dt_display_layout.addWidget(dt_info)
+        
         # Заглушка для вкладки
         placeholder = QLabel("Интерфейс для шифра двойной перестановки будет добавлен позже")
         placeholder.setFont(self.button_font)
@@ -573,6 +672,354 @@ class CipherDemo(QMainWindow):  # Переименовал класс для б�
                     self.matrix_cells[row][col].setStyleSheet(
                         "border: 2px solid black; padding: 8px; font-weight: bold; font-size: 18px;"
                     )
+
+    def dt_start_encryption(self):
+        """Начать процесс шифрования методом двойной перестановки"""
+        # Получаем введенные данные
+        self.dt_plaintext = self.dt_text_input.toPlainText().strip().upper()
+        self.dt_key1 = self.dt_key1_input.toPlainText().strip().upper()
+        self.dt_key2 = self.dt_key2_input.toPlainText().strip().upper()
+        
+        # Проверяем заполнение полей
+        if not self.dt_plaintext or not self.dt_key1 or not self.dt_key2:
+            QMessageBox.warning(self, "Предупреждение", "Заполните все поля!")
+            return
+        
+        # Сбрасываем шаг и включаем кнопки навигации
+        self.dt_current_step = 0
+        self.dt_next_btn.setEnabled(True)
+        
+        # Обновляем отображение
+        self.dt_update_display()
+    
+    def dt_next_step(self):
+        """Переход к следующему шагу демонстрации"""
+        if self.dt_current_step < self.dt_total_steps - 1:
+            self.dt_current_step += 1
+            self.dt_update_display()
+            self.dt_prev_btn.setEnabled(True)
+            if self.dt_current_step == self.dt_total_steps - 1:
+                self.dt_next_btn.setEnabled(False)
+    
+    def dt_previous_step(self):
+        """Переход к предыдущему шагу демонстрации"""
+        if self.dt_current_step > 0:
+            self.dt_current_step -= 1
+            self.dt_update_display()
+            self.dt_next_btn.setEnabled(True)
+            if self.dt_current_step == 0:
+                self.dt_prev_btn.setEnabled(False)
+    
+    def dt_reset_display(self):
+        """Очистка области отображения демонстрации"""
+        while self.dt_display_layout.count():
+            item = self.dt_display_layout.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+                
+    def dt_update_display(self):
+        """Обновление отображения шифрования в зависимости от текущего шага"""
+        # Очищаем область отображения
+        self.dt_reset_display()
+        
+        # Обновляем метку текущего шага
+        self.dt_step_label.setText(f"Шаг {self.dt_current_step + 1} из {self.dt_total_steps}")
+        
+        # Содержимое в зависимости от шага
+        if self.dt_current_step == 0:
+            # Шаг 1: Подготовка данных
+            self.dt_show_step1()
+        elif self.dt_current_step == 1:
+            # Шаг 2: Первый этап перестановки
+            self.dt_show_step2()
+        elif self.dt_current_step == 2:
+            # Шаг 3: Второй этап перестановки
+            self.dt_show_step3()
+        elif self.dt_current_step == 3:
+            # Шаг 4: Результат шифрования
+            self.dt_show_step4()
+    
+    def dt_show_step1(self):
+        """Отображение первого шага - подготовка данных"""
+        # Создаем заголовок
+        header = QLabel("Шаг 1: Подготовка данных")
+        header.setFont(self.button_font)
+        self.dt_display_layout.addWidget(header)
+        
+        # Информация о вводных данных
+        info_text = QTextEdit()
+        info_text.setReadOnly(True)
+        info_text.setFont(self.button_font)
+        info_text.setPlainText(
+            f"Исходный текст: {self.dt_plaintext}\n"
+            f"Ключевое слово №1: {self.dt_key1}\n"
+            f"Ключевое слово №2: {self.dt_key2}\n\n"
+            "В шифре двойной перестановки текст преобразуется в таблицу, "
+            "а затем перемешивается дважды с использованием двух разных ключей."
+        )
+        self.dt_display_layout.addWidget(info_text)
+        
+        # Генерируем порядок перестановок для обоих ключей
+        self.dt_key1_order = self.dt_generate_permutation_order(self.dt_key1)
+        self.dt_key2_order = self.dt_generate_permutation_order(self.dt_key2)
+        
+        # Отображаем порядок перестановок
+        order_text = QTextEdit()
+        order_text.setReadOnly(True)
+        order_text.setFont(self.button_font)
+        order_text.setPlainText(
+            "Порядок перестановок:\n\n"
+            f"Ключ №1 ({self.dt_key1}): {', '.join(map(str, self.dt_key1_order))}\n"
+            f"Ключ №2 ({self.dt_key2}): {', '.join(map(str, self.dt_key2_order))}\n\n"
+            "Порядок перестановок определяется по алфавитному порядку букв в ключе. "
+            "Например, для ключа 'ПРИМЕР' порядок будет: 4, 5, 1, 3, 2, 6 (П - 4-я по алфавиту, Р - 5-я и т.д.)"
+        )
+        self.dt_display_layout.addWidget(order_text)
+        
+    def dt_show_step2(self):
+        """Отображение второго шага - первый этап перестановки"""
+        # Создаем заголовок
+        header = QLabel("Шаг 2: Первый этап перестановки")
+        header.setFont(self.button_font)
+        self.dt_display_layout.addWidget(header)
+        
+        # Вычисляем размеры таблицы для первого ключа
+        cols1 = len(self.dt_key1)
+        rows1 = (len(self.dt_plaintext) + cols1 - 1) // cols1
+        
+        # Создаем начальную таблицу
+        self.dt_initial_table = []
+        text_index = 0
+        for i in range(rows1):
+            row = []
+            for j in range(cols1):
+                if text_index < len(self.dt_plaintext):
+                    row.append(self.dt_plaintext[text_index])
+                    text_index += 1
+                else:
+                    # Дополняем пробелами, если не хватает символов
+                    row.append(" ")
+                    
+            self.dt_initial_table.append(row)
+        
+        # Информация о первой таблице
+        info_text = QTextEdit()
+        info_text.setReadOnly(True)
+        info_text.setFont(self.button_font)
+        info_text.setPlainText(
+            f"Текст размещается в таблицу размера {rows1}x{cols1} (строки x столбцы).\n"
+            "Количество столбцов соответствует длине первого ключа.\n\n"
+            "Начальная таблица:"
+        )
+        self.dt_display_layout.addWidget(info_text)
+        
+        # Отображаем исходную таблицу
+        table_widget = QWidget()
+        table_layout = QGridLayout(table_widget)
+        
+        # Добавляем заголовки столбцов (ключ и порядок)
+        for col in range(cols1):
+            # Буква ключа
+            key_cell = QLabel(self.dt_key1[col])
+            key_cell.setFont(self.button_font)
+            key_cell.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            key_cell.setStyleSheet("border: 1px solid gray; background-color: #e0e0ff; padding: 5px;")
+            table_layout.addWidget(key_cell, 0, col + 1)
+            
+            # Порядок перестановки
+            order_cell = QLabel(str(self.dt_key1_order[col]))
+            order_cell.setFont(self.button_font)
+            order_cell.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            order_cell.setStyleSheet("border: 1px solid gray; background-color: #ffe0e0; padding: 5px;")
+            table_layout.addWidget(order_cell, 1, col + 1)
+        
+        # Добавляем данные таблицы
+        for row in range(rows1):
+            # Номер строки
+            row_cell = QLabel(str(row + 1))
+            row_cell.setFont(self.button_font)
+            row_cell.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            row_cell.setStyleSheet("border: 1px solid gray; background-color: #e0ffe0; padding: 5px;")
+            table_layout.addWidget(row_cell, row + 2, 0)
+            
+            for col in range(cols1):
+                # Содержимое ячейки
+                cell = QLabel(self.dt_initial_table[row][col])
+                cell.setFont(self.button_font)
+                cell.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                cell.setStyleSheet("border: 1px solid black; padding: 8px;")
+                cell.setMinimumSize(40, 40)
+                table_layout.addWidget(cell, row + 2, col + 1)
+        
+        self.dt_display_layout.addWidget(table_widget)
+        
+        # Выполняем первую перестановку
+        self.dt_intermediate_text = ""
+        for order_index in range(1, len(self.dt_key1_order) + 1):
+            col = self.dt_key1_order.index(order_index)
+            for row in range(rows1):
+                self.dt_intermediate_text += self.dt_initial_table[row][col]
+        
+        # Описание результата
+        result_text = QTextEdit()
+        result_text.setReadOnly(True)
+        result_text.setFont(self.button_font)
+        result_text.setPlainText(
+            "Первая перестановка:\n\n"
+            "Столбцы считываются в порядке, определенном первым ключом. "
+            f"Порядок перестановки: {', '.join(map(str, self.dt_key1_order))}\n\n"
+            f"Результат первой перестановки: {self.dt_intermediate_text}"
+        )
+        self.dt_display_layout.addWidget(result_text)
+    
+    def dt_show_step3(self):
+        """Отображение третьего шага - второй этап перестановки"""
+        # Создаем заголовок
+        header = QLabel("Шаг 3: Второй этап перестановки")
+        header.setFont(self.button_font)
+        self.dt_display_layout.addWidget(header)
+        
+        # Вычисляем размеры таблицы для второго ключа
+        cols2 = len(self.dt_key2)
+        rows2 = (len(self.dt_intermediate_text) + cols2 - 1) // cols2
+        
+        # Создаем промежуточную таблицу
+        self.dt_second_table = []
+        text_index = 0
+        for i in range(rows2):
+            row = []
+            for j in range(cols2):
+                if text_index < len(self.dt_intermediate_text):
+                    row.append(self.dt_intermediate_text[text_index])
+                    text_index += 1
+                else:
+                    # Дополняем пробелами, если не хватает символов
+                    row.append(" ")
+                    
+            self.dt_second_table.append(row)
+        
+        # Информация о второй таблице
+        info_text = QTextEdit()
+        info_text.setReadOnly(True)
+        info_text.setFont(self.button_font)
+        info_text.setPlainText(
+            f"Промежуточный текст размещается в таблицу размера {rows2}x{cols2} (строки x столбцы).\n"
+            "Количество столбцов соответствует длине второго ключа.\n\n"
+            "Промежуточная таблица:"
+        )
+        self.dt_display_layout.addWidget(info_text)
+        
+        # Отображаем вторую таблицу
+        table_widget = QWidget()
+        table_layout = QGridLayout(table_widget)
+        
+        # Добавляем заголовки столбцов (ключ и порядок)
+        for col in range(cols2):
+            # Буква ключа
+            key_cell = QLabel(self.dt_key2[col])
+            key_cell.setFont(self.button_font)
+            key_cell.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            key_cell.setStyleSheet("border: 1px solid gray; background-color: #e0e0ff; padding: 5px;")
+            table_layout.addWidget(key_cell, 0, col + 1)
+            
+            # Порядок перестановки
+            order_cell = QLabel(str(self.dt_key2_order[col]))
+            order_cell.setFont(self.button_font)
+            order_cell.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            order_cell.setStyleSheet("border: 1px solid gray; background-color: #ffe0e0; padding: 5px;")
+            table_layout.addWidget(order_cell, 1, col + 1)
+        
+        # Добавляем данные таблицы
+        for row in range(rows2):
+            # Номер строки
+            row_cell = QLabel(str(row + 1))
+            row_cell.setFont(self.button_font)
+            row_cell.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            row_cell.setStyleSheet("border: 1px solid gray; background-color: #e0ffe0; padding: 5px;")
+            table_layout.addWidget(row_cell, row + 2, 0)
+            
+            for col in range(cols2):
+                # Содержимое ячейки
+                cell = QLabel(self.dt_second_table[row][col])
+                cell.setFont(self.button_font)
+                cell.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                cell.setStyleSheet("border: 1px solid black; padding: 8px;")
+                cell.setMinimumSize(40, 40)
+                table_layout.addWidget(cell, row + 2, col + 1)
+        
+        self.dt_display_layout.addWidget(table_widget)
+        
+        # Выполняем вторую перестановку
+        self.dt_ciphertext = ""
+        for order_index in range(1, len(self.dt_key2_order) + 1):
+            col = self.dt_key2_order.index(order_index)
+            for row in range(rows2):
+                if self.dt_second_table[row][col] != " ":
+                    self.dt_ciphertext += self.dt_second_table[row][col]
+        
+        # Описание результата
+        result_text = QTextEdit()
+        result_text.setReadOnly(True)
+        result_text.setFont(self.button_font)
+        result_text.setPlainText(
+            "Вторая перестановка:\n\n"
+            "Столбцы считываются в порядке, определенном вторым ключом. "
+            f"Порядок перестановки: {', '.join(map(str, self.dt_key2_order))}\n\n"
+            f"Результат второй перестановки (зашифрованный текст): {self.dt_ciphertext}"
+        )
+        self.dt_display_layout.addWidget(result_text)
+    
+    def dt_show_step4(self):
+        """Отображение четвертого шага - результат шифрования"""
+        # Создаем заголовок
+        header = QLabel("Шаг 4: Результат шифрования")
+        header.setFont(self.button_font)
+        self.dt_display_layout.addWidget(header)
+        
+        # Сводка результатов
+        result_text = QTextEdit()
+        result_text.setReadOnly(True)
+        result_text.setFont(self.button_font)
+        result_text.setPlainText(
+            "Исходные данные:\n"
+            f"Исходный текст: {self.dt_plaintext}\n"
+            f"Ключевое слово №1: {self.dt_key1}\n"
+            f"Ключевое слово №2: {self.dt_key2}\n\n"
+            "Результаты шифрования:\n"
+            f"Промежуточный текст (после первой перестановки): {self.dt_intermediate_text}\n"
+            f"Зашифрованный текст (после второй перестановки): {self.dt_ciphertext}\n\n"
+            "Шифр двойной перестановки обеспечивает более высокую криптостойкость "
+            "за счет применения двух последовательных перестановок с разными ключами."
+        )
+        self.dt_display_layout.addWidget(result_text)
+        
+        # Дополнительная информация о криптоанализе
+        crypto_text = QTextEdit()
+        crypto_text.setReadOnly(True)
+        crypto_text.setFont(self.button_font)
+        crypto_text.setPlainText(
+            "Интересный факт о безопасности:\n\n"
+            "Шифр двойной перестановки был широко использован в годы Второй мировой войны. "
+            "Несмотря на свою относительную простоту, при использовании длинных случайных ключей "
+            "и однократного применения для каждого сообщения, он обеспечивал хорошую защиту информации."
+        )
+        self.dt_display_layout.addWidget(crypto_text)
+    
+    def dt_generate_permutation_order(self, key):
+        """Генерирует порядок перестановки на основе ключевого слова"""
+        # Создаем список букв ключа с их индексами
+        key_with_indices = [(char, i) for i, char in enumerate(key)]
+        
+        # Сортируем буквы в алфавитном порядке
+        sorted_key = sorted(key_with_indices, key=lambda x: x[0])
+        
+        # Формируем порядок перестановки (1-индексированный)
+        permutation_order = [0] * len(key)
+        for i, (_, original_index) in enumerate(sorted_key):
+            permutation_order[original_index] = i + 1
+            
+        return permutation_order
 
 def main():
     app = QApplication(sys.argv)
