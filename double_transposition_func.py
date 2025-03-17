@@ -62,13 +62,38 @@ def double_transposition_encrypt(plaintext, key1, key2):
             row += padding
         matrix.append(list(row))
     
-    # Создаем матрицу перестановки для каждого ключа
+    # Создаем перестановки для каждого ключа
     permutation1 = get_key_permutation(key1)
-
     permutation2 = get_key_permutation(key2)
     
-        
+    # Первая перестановка - перестановка столбцов
+    # Для каждой строки матрицы меняем порядок символов согласно permutation1
+    temp_matrix = []
+    for row in matrix:
+        # Создаем новую строку с переставленными элементами
+        new_row = [''] * cols
+        for i in range(cols):
+            # permutation1[i] содержит индекс символа, который должен быть на i-ой позиции
+            # Индексы в permutation начинаются с 1, поэтому вычитаем 1
+            new_row[i] = row[permutation1[i] - 1]
+        temp_matrix.append(new_row)
     
+    # Вторая перестановка - перестановка строк
+    # Создаем новую матрицу с переставленными строками согласно permutation2
+    result_matrix = [[''] * cols for _ in range(rows)]
+    for i in range(min(len(temp_matrix), rows)):
+        # permutation2[i] содержит индекс строки, которая должна быть на i-ой позиции
+        # Индексы в permutation начинаются с 1, поэтому вычитаем 1
+        result_matrix[i] = temp_matrix[permutation2[i] - 1]
+    
+    # Преобразуем матрицу обратно в текст, считывая по строкам
+    ciphertext = ''
+    for row in result_matrix:
+        ciphertext += ''.join(row)
+    
+    # return matrix, permutation1, permutation2
+    return ciphertext
+
 def get_key_permutation(key):
     """
     Возвращает список индексов перестановки для заданного ключа.
@@ -92,8 +117,8 @@ def get_key_permutation(key):
 
 
 # Тест шифрования
-plaintext = 'АБВГДЕЙКА'
+plaintext = 'ЕХАЛ ГРЕК ЧЕРЕ РЕКУ'
 key1 = 'КЛЮЧ'
-key2 = 'секрет'
+key2 = 'СТОЛ'
 ciphertext = double_transposition_encrypt(plaintext, key1, key2)
-print(ciphertext)  # Ожидаемый результат: 'ЙГКАБДВЕА'
+print(ciphertext) 
