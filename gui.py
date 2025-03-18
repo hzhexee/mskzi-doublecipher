@@ -788,7 +788,7 @@ class CipherDemo(QMainWindow):  # Переименовал класс для б�
         cols1 = len(self.dt_key1)
         rows1 = (len(self.dt_plaintext) + cols1 - 1) // cols1
         
-        # Создаем начальную таблицу
+        # Создаем начальную таблицу (только для вычислений, не для отображения)
         self.dt_initial_table = []
         text_index = 0
         for i in range(rows1):
@@ -810,49 +810,9 @@ class CipherDemo(QMainWindow):  # Переименовал класс для б�
         info_text.setPlainText(
             f"Текст размещается в таблицу размера {rows1}x{cols1} (строки x столбцы).\n"
             "Количество столбцов соответствует длине первого ключа.\n\n"
-            "Начальная таблица:"
+            f"Порядок перестановки для первого ключа ({self.dt_key1}): {', '.join(map(str, self.dt_key1_order))}"
         )
         self.dt_display_layout.addWidget(info_text)
-        
-        # Отображаем исходную таблицу
-        table_widget = QWidget()
-        table_layout = QGridLayout(table_widget)
-        
-        # Добавляем заголовки столбцов (ключ и порядок)
-        for col in range(cols1):
-            # Буква ключа
-            key_cell = QLabel(self.dt_key1[col])
-            key_cell.setFont(self.button_font)
-            key_cell.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            key_cell.setStyleSheet("border: 1px solid gray; background-color: #e0e0ff; padding: 5px;")
-            table_layout.addWidget(key_cell, 0, col + 1)
-            
-            # Порядок перестановки
-            order_cell = QLabel(str(self.dt_key1_order[col]))
-            order_cell.setFont(self.button_font)
-            order_cell.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            order_cell.setStyleSheet("border: 1px solid gray; background-color: #ffe0e0; padding: 5px;")
-            table_layout.addWidget(order_cell, 1, col + 1)
-        
-        # Добавляем данные таблицы
-        for row in range(rows1):
-            # Номер строки
-            row_cell = QLabel(str(row + 1))
-            row_cell.setFont(self.button_font)
-            row_cell.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            row_cell.setStyleSheet("border: 1px solid gray; background-color: #e0ffe0; padding: 5px;")
-            table_layout.addWidget(row_cell, row + 2, 0)
-            
-            for col in range(cols1):
-                # Содержимое ячейки
-                cell = QLabel(self.dt_initial_table[row][col])
-                cell.setFont(self.button_font)
-                cell.setAlignment(Qt.AlignmentFlag.AlignCenter)
-                cell.setStyleSheet("border: 1px solid black; padding: 8px;")
-                cell.setMinimumSize(40, 40)
-                table_layout.addWidget(cell, row + 2, col + 1)
-        
-        self.dt_display_layout.addWidget(table_widget)
         
         # Выполняем первую перестановку
         self.dt_intermediate_text = ""
@@ -872,7 +832,7 @@ class CipherDemo(QMainWindow):  # Переименовал класс для б�
             f"Результат первой перестановки: {self.dt_intermediate_text}"
         )
         self.dt_display_layout.addWidget(result_text)
-    
+
     def dt_show_step3(self):
         """Отображение третьего шага - второй этап перестановки"""
         # Создаем заголовок
@@ -884,7 +844,7 @@ class CipherDemo(QMainWindow):  # Переименовал класс для б�
         cols2 = len(self.dt_key2)
         rows2 = (len(self.dt_intermediate_text) + cols2 - 1) // cols2
         
-        # Создаем промежуточную таблицу
+        # Создаем промежуточную таблицу (только для вычислений, не для отображения)
         self.dt_second_table = []
         text_index = 0
         for i in range(rows2):
@@ -906,49 +866,9 @@ class CipherDemo(QMainWindow):  # Переименовал класс для б�
         info_text.setPlainText(
             f"Промежуточный текст размещается в таблицу размера {rows2}x{cols2} (строки x столбцы).\n"
             "Количество столбцов соответствует длине второго ключа.\n\n"
-            "Промежуточная таблица:"
+            f"Порядок перестановки для второго ключа ({self.dt_key2}): {', '.join(map(str, self.dt_key2_order))}"
         )
         self.dt_display_layout.addWidget(info_text)
-        
-        # Отображаем вторую таблицу
-        table_widget = QWidget()
-        table_layout = QGridLayout(table_widget)
-        
-        # Добавляем заголовки столбцов (ключ и порядок)
-        for col in range(cols2):
-            # Буква ключа
-            key_cell = QLabel(self.dt_key2[col])
-            key_cell.setFont(self.button_font)
-            key_cell.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            key_cell.setStyleSheet("border: 1px solid gray; background-color: #e0e0ff; padding: 5px;")
-            table_layout.addWidget(key_cell, 0, col + 1)
-            
-            # Порядок перестановки
-            order_cell = QLabel(str(self.dt_key2_order[col]))
-            order_cell.setFont(self.button_font)
-            order_cell.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            order_cell.setStyleSheet("border: 1px solid gray; background-color: #ffe0e0; padding: 5px;")
-            table_layout.addWidget(order_cell, 1, col + 1)
-        
-        # Добавляем данные таблицы
-        for row in range(rows2):
-            # Номер строки
-            row_cell = QLabel(str(row + 1))
-            row_cell.setFont(self.button_font)
-            row_cell.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            row_cell.setStyleSheet("border: 1px solid gray; background-color: #e0ffe0; padding: 5px;")
-            table_layout.addWidget(row_cell, row + 2, 0)
-            
-            for col in range(cols2):
-                # Содержимое ячейки
-                cell = QLabel(self.dt_second_table[row][col])
-                cell.setFont(self.button_font)
-                cell.setAlignment(Qt.AlignmentFlag.AlignCenter)
-                cell.setStyleSheet("border: 1px solid black; padding: 8px;")
-                cell.setMinimumSize(40, 40)
-                table_layout.addWidget(cell, row + 2, col + 1)
-        
-        self.dt_display_layout.addWidget(table_widget)
         
         # Выполняем вторую перестановку
         self.dt_ciphertext = ""

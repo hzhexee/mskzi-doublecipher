@@ -1,7 +1,7 @@
 import random
 import re
 
-def text_prep(text):
+def sanitize_text(text):
     """
     Подготавливает текст для шифрования:
     - Заменяет 'Ё' на 'Е'
@@ -36,11 +36,11 @@ def double_transposition_encrypt(plaintext, key1, key2):
         str: Зашифрованный текст
     """
     # Подготовка текста
-    text = text_prep(plaintext)
+    text = sanitize_text(plaintext)
     
     # Подготовка ключей
-    key1 = text_prep(key1)
-    key2 = text_prep(key2)
+    key1 = sanitize_text(key1)
+    key2 = sanitize_text(key2)
     
     # Определение размеров матрицы
     cols = len(key1)
@@ -124,8 +124,8 @@ def get_key_permutation(key):
 
 
 # Тест шифрования
-# plaintext = 'ЕХАЛ ГРЕК ЧЕРЕ РЕКУ'
-# key1 = 'КЛЮЧ'
-# key2 = 'СТОЛ'
-# ciphertext = double_transposition_encrypt(plaintext, key1, key2)
-# print(ciphertext) 
+plaintext = 'АБВГДЕЙКА'
+key1 = 'КЛЮЧ'
+key2 = 'СЕКРЕТ'
+ciphertext = double_transposition_encrypt(plaintext, key1, key2)
+print(ciphertext) 
