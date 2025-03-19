@@ -6,6 +6,8 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QFont
 from playfair_func import text_prep
+# Добавляем импорт функции визуализации
+from double_transposition_func import visualize_double_transposition, dt_resultOnly, sanitize_text
 
 class CipherDemo(QMainWindow):  # Переименовал класс для более общего названия
     def __init__(self):
@@ -237,7 +239,7 @@ class CipherDemo(QMainWindow):  # Переименовал класс для б�
         
         # Инициализируем начальное состояние
         self.dt_current_step = 0
-        self.dt_total_steps = 4
+        self.dt_total_steps = 3
         
         # Добавляем информационный текст
         dt_info = QTextEdit()
@@ -250,12 +252,6 @@ class CipherDemo(QMainWindow):  # Переименовал класс для б�
             "Демонстрация покажет пошаговый процесс шифрования."
         )
         self.dt_display_layout.addWidget(dt_info)
-        
-        # Заглушка для вкладки
-        placeholder = QLabel("Интерфейс для шифра двойной перестановки будет добавлен позже")
-        placeholder.setFont(self.button_font)
-        placeholder.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        double_transposition_layout.addWidget(placeholder)
         
         # Добавляем вкладки в виджет вкладок
         self.tab_widget.addTab(playfair_tab, "Шифр Плейфера")
@@ -680,6 +676,11 @@ class CipherDemo(QMainWindow):  # Переименовал класс для б�
         self.dt_key1 = self.dt_key1_input.toPlainText().strip().upper()
         self.dt_key2 = self.dt_key2_input.toPlainText().strip().upper()
         
+        # Применяем очистку текста для шифрования
+        self.dt_plaintext = sanitize_text(self.dt_plaintext)
+        self.dt_key1 = sanitize_text(self.dt_key1)
+        self.dt_key2 = sanitize_text(self.dt_key2)
+        
         # Проверяем заполнение полей
         if not self.dt_plaintext or not self.dt_key1 or not self.dt_key2:
             QMessageBox.warning(self, "Предупреждение", "Заполните все поля!")
@@ -731,13 +732,10 @@ class CipherDemo(QMainWindow):  # Переименовал класс для б�
             # Шаг 1: Подготовка данных
             self.dt_show_step1()
         elif self.dt_current_step == 1:
-            # Шаг 2: Первый этап перестановки
+            # Шаг 2: Процесс перестановки (объединенный с шагом 3)
             self.dt_show_step2()
         elif self.dt_current_step == 2:
-            # Шаг 3: Второй этап перестановки
-            self.dt_show_step3()
-        elif self.dt_current_step == 3:
-            # Шаг 4: Результат шифрования
+            # Шаг 3: Результат шифрования (был 4)
             self.dt_show_step4()
     
     def dt_show_step1(self):
@@ -778,17 +776,28 @@ class CipherDemo(QMainWindow):  # Переименовал класс для б�
         self.dt_display_layout.addWidget(order_text)
         
     def dt_show_step2(self):
-        """Отображение второго шага - первый этап перестановки"""
+        """Отображение процесса перестановки (объединенные шаги 2 и 3)"""
         # Создаем заголовок
-        header = QLabel("Шаг 2: Первый этап перестановки")
+        header = QLabel("Шаг 2: Процесс перестановки")
         header.setFont(self.button_font)
         self.dt_display_layout.addWidget(header)
         
+        # Используем функцию визуализации для отображения процесса
+        visualization = visualize_double_transposition(self.dt_plaintext, self.dt_key1, self.dt_key2)
+        
+        # Отображаем результат визуализации
+        visual_text = QTextEdit()
+        visual_text.setReadOnly(True)
+        visual_text.setFont(self.button_font)
+        visual_text.setPlainText(visualization)
+        self.dt_display_layout.addWidget(visual_text)
+        
+        # Сохраняем промежуточный и конечный текст для использования на финальном шаге
         # Вычисляем размеры таблицы для первого ключа
         cols1 = len(self.dt_key1)
         rows1 = (len(self.dt_plaintext) + cols1 - 1) // cols1
         
-        # Создаем начальную таблицу (только для вычислений, не для отображения)
+        # Создаем начальную таблицу
         self.dt_initial_table = []
         text_index = 0
         for i in range(rows1):
@@ -798,21 +807,8 @@ class CipherDemo(QMainWindow):  # Переименовал класс для б�
                     row.append(self.dt_plaintext[text_index])
                     text_index += 1
                 else:
-                    # Дополняем пробелами, если не хватает символов
                     row.append(" ")
-                    
             self.dt_initial_table.append(row)
-        
-        # Информация о первой таблице
-        info_text = QTextEdit()
-        info_text.setReadOnly(True)
-        info_text.setFont(self.button_font)
-        info_text.setPlainText(
-            f"Текст размещается в таблицу размера {rows1}x{cols1} (строки x столбцы).\n"
-            "Количество столбцов соответствует длине первого ключа.\n\n"
-            f"Порядок перестановки для первого ключа ({self.dt_key1}): {', '.join(map(str, self.dt_key1_order))}"
-        )
-        self.dt_display_layout.addWidget(info_text)
         
         # Выполняем первую перестановку
         self.dt_intermediate_text = ""
@@ -821,30 +817,11 @@ class CipherDemo(QMainWindow):  # Переименовал класс для б�
             for row in range(rows1):
                 self.dt_intermediate_text += self.dt_initial_table[row][col]
         
-        # Описание результата
-        result_text = QTextEdit()
-        result_text.setReadOnly(True)
-        result_text.setFont(self.button_font)
-        result_text.setPlainText(
-            "Первая перестановка:\n\n"
-            "Столбцы считываются в порядке, определенном первым ключом. "
-            f"Порядок перестановки: {', '.join(map(str, self.dt_key1_order))}\n\n"
-            f"Результат первой перестановки: {self.dt_intermediate_text}"
-        )
-        self.dt_display_layout.addWidget(result_text)
-
-    def dt_show_step3(self):
-        """Отображение третьего шага - второй этап перестановки"""
-        # Создаем заголовок
-        header = QLabel("Шаг 3: Второй этап перестановки")
-        header.setFont(self.button_font)
-        self.dt_display_layout.addWidget(header)
-        
         # Вычисляем размеры таблицы для второго ключа
         cols2 = len(self.dt_key2)
         rows2 = (len(self.dt_intermediate_text) + cols2 - 1) // cols2
         
-        # Создаем промежуточную таблицу (только для вычислений, не для отображения)
+        # Создаем промежуточную таблицу
         self.dt_second_table = []
         text_index = 0
         for i in range(rows2):
@@ -854,21 +831,8 @@ class CipherDemo(QMainWindow):  # Переименовал класс для б�
                     row.append(self.dt_intermediate_text[text_index])
                     text_index += 1
                 else:
-                    # Дополняем пробелами, если не хватает символов
                     row.append(" ")
-                    
             self.dt_second_table.append(row)
-        
-        # Информация о второй таблице
-        info_text = QTextEdit()
-        info_text.setReadOnly(True)
-        info_text.setFont(self.button_font)
-        info_text.setPlainText(
-            f"Промежуточный текст размещается в таблицу размера {rows2}x{cols2} (строки x столбцы).\n"
-            "Количество столбцов соответствует длине второго ключа.\n\n"
-            f"Порядок перестановки для второго ключа ({self.dt_key2}): {', '.join(map(str, self.dt_key2_order))}"
-        )
-        self.dt_display_layout.addWidget(info_text)
         
         # Выполняем вторую перестановку
         self.dt_ciphertext = ""
@@ -877,25 +841,21 @@ class CipherDemo(QMainWindow):  # Переименовал класс для б�
             for row in range(rows2):
                 if self.dt_second_table[row][col] != " ":
                     self.dt_ciphertext += self.dt_second_table[row][col]
-        
-        # Описание результата
-        result_text = QTextEdit()
-        result_text.setReadOnly(True)
-        result_text.setFont(self.button_font)
-        result_text.setPlainText(
-            "Вторая перестановка:\n\n"
-            "Столбцы считываются в порядке, определенном вторым ключом. "
-            f"Порядок перестановки: {', '.join(map(str, self.dt_key2_order))}\n\n"
-            f"Результат второй перестановки (зашифрованный текст): {self.dt_ciphertext}"
-        )
-        self.dt_display_layout.addWidget(result_text)
     
+    # Переименовываем метод dt_show_step4 в dt_show_step3, но сохраняем его для обратной совместимости
+    def dt_show_step3(self):
+        """Отображение результата шифрования (бывший шаг 4)"""
+        self.dt_show_step4()
+        
     def dt_show_step4(self):
-        """Отображение четвертого шага - результат шифрования"""
+        """Отображение результата шифрования"""
         # Создаем заголовок
-        header = QLabel("Шаг 4: Результат шифрования")
+        header = QLabel("Шаг 3: Результат шифрования")
         header.setFont(self.button_font)
         self.dt_display_layout.addWidget(header)
+        
+        # Получаем результат с помощью функции dt_resultOnly
+        result_cipher = dt_resultOnly(self.dt_plaintext, self.dt_key1, self.dt_key2)
         
         # Сводка результатов
         result_text = QTextEdit()
@@ -908,24 +868,14 @@ class CipherDemo(QMainWindow):  # Переименовал класс для б�
             f"Ключевое слово №2: {self.dt_key2}\n\n"
             "Результаты шифрования:\n"
             f"Промежуточный текст (после первой перестановки): {self.dt_intermediate_text}\n"
-            f"Зашифрованный текст (после второй перестановки): {self.dt_ciphertext}\n\n"
+            f"Зашифрованный текст (после второй перестановки): {result_cipher}\n\n"
             "Шифр двойной перестановки обеспечивает более высокую криптостойкость "
             "за счет применения двух последовательных перестановок с разными ключами."
         )
         self.dt_display_layout.addWidget(result_text)
         
-        # Дополнительная информация о криптоанализе
-        crypto_text = QTextEdit()
-        crypto_text.setReadOnly(True)
-        crypto_text.setFont(self.button_font)
-        crypto_text.setPlainText(
-            "Интересный факт о безопасности:\n\n"
-            "Шифр двойной перестановки был широко использован в годы Второй мировой войны. "
-            "Несмотря на свою относительную простоту, при использовании длинных случайных ключей "
-            "и однократного применения для каждого сообщения, он обеспечивал хорошую защиту информации."
-        )
-        self.dt_display_layout.addWidget(crypto_text)
-    
+        # Добавляем отдельный блок сравнения результатов
+
     def dt_generate_permutation_order(self, key):
         """Генерирует порядок перестановки на основе ключевого слова"""
         # Создаем список букв ключа с их индексами
