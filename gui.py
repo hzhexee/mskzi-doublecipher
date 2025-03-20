@@ -352,6 +352,10 @@ class CipherDemo(QMainWindow):  # Переименовал класс для б�
                 widget.deleteLater()
 
     def update_display(self):
+        # Stop any ongoing animation timers
+        if hasattr(self, 'animation_timer') and self.animation_timer is not None:
+            self.animation_timer.stop()
+        
         # Reset the demo display first to ensure we can set text
         self.reset_demo_display()
         
@@ -580,6 +584,10 @@ class CipherDemo(QMainWindow):  # Переименовал класс для б�
         """Animate the encryption process for each bigram"""
         from PyQt6.QtCore import QTimer
         
+        # First check if we still have an encryption_display widget
+        if not hasattr(self, 'encryption_display') or self.encryption_display is None:
+            return  # Exit if widget doesn't exist anymore
+        
         if self.current_bigram_index < len(self.bigrams):
             # Сбросить предыдущие подсветки
             self.reset_highlights()
@@ -587,8 +595,7 @@ class CipherDemo(QMainWindow):  # Переименовал класс для б�
             # Get current bigram
             current_bigram = self.bigrams[self.current_bigram_index]
             
-            # Compute the encrypted version of the current bigram
-            # Очистим зашифрованный текст от пробелов перед разбиением на биграммы
+            # Process for encrypted bigram
             clean_encrypted_text = ''.join(self.encrypted_text.split())
             encrypted_bigrams_list = [clean_encrypted_text[i:i+2] for i in range(0, len(clean_encrypted_text), 2)]
             
@@ -600,19 +607,18 @@ class CipherDemo(QMainWindow):  # Переименовал класс для б�
             # Add to encrypted bigrams list
             self.encrypted_bigrams.append(encrypted_bigram)
             
-            # Подсвечиваем исходные символы белым
+            # Highlight operations
             for char in current_bigram:
                 pos = self.find_char_position(char)
                 if pos:
                     self.highlight_cell(pos[0], pos[1], "blue")
             
-            # Подсвечиваем зашифрованные символы зеленым
             for char in encrypted_bigram:
                 pos = self.find_char_position(char)
                 if pos:
                     self.highlight_cell(pos[0], pos[1], "green")
             
-            # Display the current animation step
+            # Build progress text
             progress_text = (
                 f"Шифрование биграммы {self.current_bigram_index + 1} из {len(self.bigrams)}:\n\n"
                 f"Текущая биграмма: {current_bigram}\n"
@@ -624,22 +630,28 @@ class CipherDemo(QMainWindow):  # Переименовал класс для б�
             if self.encrypted_bigrams:
                 progress_text += f"\nЗашифрованные биграммы: {' '.join(self.encrypted_bigrams)}"
             
-            self.encryption_display.setPlainText(progress_text)
+            # Safely update the display
+            try:
+                self.encryption_display.setPlainText(progress_text)
+            except RuntimeError:
+                # Widget was deleted, abort animation
+                return
             
             # Move to next bigram after delay
             self.current_bigram_index += 1
             QTimer.singleShot(2000, self.animate_encryption)  # 2-second delay
         else:
-            # Завершение анимации - сбросим подсветку
-            self.reset_highlights()
-            
-            # Animation complete
-            self.encryption_display.setPlainText(
-                "Шифрование завершено!\n\n"
-                f"Исходные биграммы: {' '.join(self.bigrams)}\n"
-                f"Зашифрованные биграммы: {' '.join(self.encrypted_bigrams)}\n"
-                f"Зашифрованный текст (слитно): {''.join(self.encrypted_bigrams)}"
-            )
+            # Animation complete - safely update final text
+            try:
+                self.encryption_display.setPlainText(
+                    "Шифрование завершено!\n\n"
+                    f"Исходные биграммы: {' '.join(self.bigrams)}\n"
+                    f"Зашифрованные биграммы: {' '.join(self.encrypted_bigrams)}\n"
+                    f"Зашифрованный текст (слитно): {''.join(self.encrypted_bigrams)}"
+                )
+            except RuntimeError:
+                # Widget was deleted, just ignore
+                pass
 
     def find_char_position(self, char):
         """Найти позицию символа в матрице"""
@@ -648,26 +660,44 @@ class CipherDemo(QMainWindow):  # Переименовал класс для б�
             
         for row in range(len(self.matrix_cells)):
             for col in range(len(self.matrix_cells[row])):
-                if self.matrix_cells[row][col].text() == char:
-                    return (row, col)
+                try:
+                    cell_text = self.matrix_cells[row][col].text()
+                    if cell_text == char:
+                        return (row, col)
+                except RuntimeError:
+                    # Skip deleted widgets
+                    continue
         return None
 
     def highlight_cell(self, row, col, color):
         """Подсветить ячейку определенным цветом"""
         if 0 <= row < len(self.matrix_cells) and 0 <= col < len(self.matrix_cells[row]):
-            self.matrix_cells[row][col].setStyleSheet(
-                f"border: 2px solid black; padding: 8px; font-weight: bold; "
-                f"font-size: 18px; background-color: {color};"
-            )
+            try:
+                self.matrix_cells[row][col].setStyleSheet(
+                    f"border: 2px solid black; padding: 8px; font-weight: bold; "
+                    f"font-size: 18px; background-color: {color};"
+                )
+            except RuntimeError:
+                # Skip deleted widgets
+                pass
 
     def reset_highlights(self):
         """Сбросить все подсветки"""
+        # Check if matrix_cells still exists and is valid
+        if not hasattr(self, 'matrix_cells') or not self.matrix_cells:
+            return
+        
         for row in range(len(self.matrix_cells)):
             for col in range(len(self.matrix_cells[row])):
-                if self.matrix_cells[row][col].text():  # Если ячейка не пуста
-                    self.matrix_cells[row][col].setStyleSheet(
-                        "border: 2px solid black; padding: 8px; font-weight: bold; font-size: 18px;"
-                    )
+                try:
+                    # Check if the cell reference is still valid
+                    if self.matrix_cells[row][col].text():  # Если ячейка не пуста
+                        self.matrix_cells[row][col].setStyleSheet(
+                            "border: 2px solid black; padding: 8px; font-weight: bold; font-size: 18px;"
+                        )
+                except RuntimeError:
+                    # Skip any deleted widgets
+                    continue
 
     def dt_start_encryption(self):
         """Начать процесс шифрования методом двойной перестановки"""
