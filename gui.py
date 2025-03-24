@@ -505,7 +505,6 @@ class CipherDemo(QMainWindow):  # Переименовал класс для б�
             QMessageBox.warning(self, "Предупреждение", "Введите текст для шифрования!")
             return
             
-        # Сохраняем исходный ключ
         self.key = text
         
         # Process the text using text_prep
@@ -519,9 +518,14 @@ class CipherDemo(QMainWindow):  # Переименовал класс для б�
         matrix_rows = 4
         matrix_cols = 8
         
-        # Display the processed text info
-        info_label = QLabel(f"Обработанный текст: {self.processed_key}")
-        info_label.setFont(self.button_font)  # Увеличиваем шрифт информационной метки
+        # Display the processed text info with explanation
+        info_label = QLabel(f"Обработанный текст: {self.processed_key}\n\n"
+                           f"Примечание: При обработке ключа выполняются следующие действия:\n"
+                           f"• Перевод в верхний регистр\n"
+                           f"• Удаление пробелов и специальных символов\n"
+                           f"• Замена дублирующихся символов\n"
+                           f"• Замена 'Ё' на 'Е' для русского алфавита")
+        info_label.setFont(self.button_font)
         info_label.setWordWrap(True)
         self.display_layout.addWidget(info_label)
         
